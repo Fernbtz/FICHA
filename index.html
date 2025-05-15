@@ -111,59 +111,65 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById('formPaciente');
-      const tabla = document.querySelector('#tablaPacientes tbody');
-      const buscador = document.getElementById('buscador');
+    const form = document.getElementById('formPaciente');
+    const tabla = document.querySelector('#tablaPacientes tbody');
+    const buscador = document.getElementById('buscador');
 
-      async function cargarPacientes() {
-        tabla.innerHTML = "";
-        const q = query(collection(db, "pacientes"), orderBy("fecha", "desc"));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => {
-          const p = doc.data();
-          const fila = document.createElement('tr');
-          fila.innerHTML = `
-            <td>${p.fecha}</td>
-            <td>${p.nombre}</td>
-            <td>${p.dni}</td>
-            <td>${p.domicilio}</td>
-            <td>${p.telefono}</td>
-            <td><a href="ficha.html?fecha=${encodeURIComponent(p.fecha)}&nombre=${encodeURIComponent(p.nombre)}&dni=${encodeURIComponent(p.dni)}&domicilio=${encodeURIComponent(p.domicilio)}&telefono=${encodeURIComponent(p.telefono)}" class="btn btn-primary btn-sm">Ver Ficha</a></td>
-          `;
-          tabla.appendChild(fila);
-        });
+    async function cargarPacientes() {
+      tabla.innerHTML = "";
+      const q = query(collection(db, "pacientes"), orderBy("fecha", "desc"));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(doc => {
+        const p = doc.data();
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${p.fecha}</td>
+          <td>${p.nombre}</td>
+          <td>${p.dni}</td>
+          <td>${p.domicilio}</td>
+          <td>${p.telefono}</td>
+          <td><a href="ficha.html?fecha=${encodeURIComponent(p.fecha)}&nombre=${encodeURIComponent(p.nombre)}&dni=${encodeURIComponent(p.dni)}&domicilio=${encodeURIComponent(p.domicilio)}&telefono=${encodeURIComponent(p.telefono)}" class="btn btn-primary btn-sm">Ver Ficha</a></td>
+        `;
+        tabla.appendChild(fila);
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nuevoPaciente = {
+        fecha: form.fecha.value.trim(),
+        nombre: form.nombre.value.trim(),
+        dni: form.dni.value.trim(),
+        domicilio: form.domicilio.value.trim(),
+        telefono: form.telefono.value.trim()
+      };
+
+      // Validar datos básicos (opcional)
+      if (!nuevoPaciente.fecha || !nuevoPaciente.nombre || !nuevoPaciente.dni) {
+        alert("Por favor completa los campos obligatorios.");
+        return;
       }
 
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const nuevoPaciente = {
-          fecha: document.getElementById('fecha').value,
-          nombre: document.getElementById('nombre').value,
-          dni: document.getElementById('dni').value,
-          domicilio: document.getElementById('domicilio').value,
-          telefono: document.getElementById('telefono').value
-        };
-        try {
-          await addDoc(collection(db, "pacientes"), nuevoPaciente);
-          form.reset();
-          cargarPacientes();
-        } catch (error) {
-          alert("Error al guardar: " + error);
-        }
-      });
-
-      buscador.addEventListener('input', function () {
-        const filtro = buscador.value.toLowerCase();
-        const filas = tabla.getElementsByTagName('tr');
-        for (let i = 0; i < filas.length; i++) {
-          let texto = filas[i].textContent.toLowerCase();
-          filas[i].style.display = texto.includes(filtro) ? '' : 'none';
-        }
-      });
-
-      cargarPacientes();
+      try {
+        await addDoc(collection(db, "pacientes"), nuevoPaciente);
+        form.reset();
+        cargarPacientes();
+      } catch (error) {
+        alert("Error al guardar: " + error.message);
+      }
     });
+
+    buscador.addEventListener('input', () => {
+      const filtro = buscador.value.toLowerCase();
+      const filas = tabla.getElementsByTagName('tr');
+      for (let i = 0; i < filas.length; i++) {
+        const texto = filas[i].textContent.toLowerCase();
+        filas[i].style.display = texto.includes(filtro) ? '' : 'none';
+      }
+    });
+
+    cargarPacientes();
   </script>
 </body>
 </html>
